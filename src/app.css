@@ -1,0 +1,74 @@
+:root {
+  --color-bg-deep:        #0b0c10;
+  --color-bg-glow:        #12162a;
+  --color-surface:        rgba(18, 22, 42, 0.72);
+  --color-text:           #e9edf1;
+  --color-text-muted:     #b9c0cc;
+  --color-btn:            #1c2033;
+  --color-btn-secondary:  #262b45;
+  --shadow-card:          0 30px 90px rgba(0, 0, 0, 0.55);
+
+  --fontsize-xs:           8px;
+  --fontsize-sm:          12px;
+  --fontsize-md:          16px;
+  --fontsize-lg:          20px;
+  --fontsize-xl:          24px;
+
+  --spacething-xs:         6px;
+  --spacething-sm:         8px;
+  --spacething-md:        12px;
+  --spacething-kg:        18px;
+  --spacething-xl:        25px;
+
+  --border-radius-xs:      6px;
+  --border-radius-sm:     12px;
+  --border-radius-md:     16px;
+  --border-radius-lg:     20px;
+  --border-radius-xl:     24px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  color: var(--color-text);
+  background: radial-gradient(1100px 700px at 50% -10%, var(--color-bg-glow), var(--color-bg-deep));
+}
+
+button,
+select,
+input[type='text'] {
+  width: 100%;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--color-btn);
+  color: var(--color-text);
+  font-weight: 650;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+}
+
+button.primary {
+  background: #ffd166;
+  color: #1b1400;
+  border-color: transparent;
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+input[type='range'] {
+  width: 100%;
+  cursor: pointer;
+}
+
+select option {
+  background: var(--color-btn);
+}
