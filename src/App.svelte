@@ -1,24 +1,29 @@
 <script>
-  import { onMount } from 'svelte';
-  import { settings } from './lib/photoSettings.svelte.js';
-  import { listCameras, startCameraById, stopCamera } from './lib/cameraService.js';
-  import { captureFrame } from './lib/photoCapture.js';
-  import { buildLayout } from './lib/layoutBuilder.js';
-  import CameraStage from './components/CameraStage.svelte';
-  import ControlPanel from './components/ControlPanel.svelte';
+  import { onMount } from "svelte";
+  import { settings } from "./lib/photoSettings.svelte.js";
+  import {
+    listCameras,
+    startCameraById,
+    stopCamera,
+  } from "./lib/cameraService.js";
+  import { captureFrame } from "./lib/photoCapture.js";
+  import { buildLayout } from "./lib/layoutBuilder.js";
+  import CameraStage from "./components/CameraStage.svelte";
+  import ControlPanel from "./components/ControlPanel.svelte";
 
   let videoRef = $state(null);
   let stream = $state(null);
-  let facing = $state('user');
+  let facing = $state("user");
   let cameras = $state([]);
-  let selectedCameraId = $state('');
-  let status = $state('Bereit.');
-  let lastOutput = $state('');
+  let selectedCameraId = $state("");
+  let status = $state("Bereit.");
+  let lastOutput = $state("");
   let isRunning = $state(false);
   let countdown = $state(0);
   let isFlashing = $state(false);
+  let lastFrames = $state([]);
 
-  let hasOutput = $derived(lastOutput !== '');
+  let hasOutput = $derived(lastOutput !== "");
   let panelOpen = $state(false);
 
   // Sync stream to video element whenever either changes
@@ -41,18 +46,18 @@
       stream = await startCameraById(deviceId || undefined);
 
       const track = stream.getVideoTracks()[0];
-      facing = track?.getSettings().facingMode ?? 'user';
-      selectedCameraId = track?.getSettings().deviceId ?? '';
+      facing = track?.getSettings().facingMode ?? "user";
+      selectedCameraId = track?.getSettings().deviceId ?? "";
 
       cameras = await listCameras();
-      status = 'Bereit.';
+      status = "Bereit.";
     } catch {
-      status = 'Kamera blockiert.';
+      status = "Kamera blockiert.";
     }
   }
 
   async function handleSelectCamera(deviceId) {
-    status = 'Kamera wechseln…';
+    status = "Kamera wechseln…";
     await initCamera(deviceId);
   }
 
@@ -61,30 +66,34 @@
   async function handleStart() {
     panelOpen = false;
     isRunning = true;
-    status = 'Serie läuft…';
+    status = "Serie läuft…";
 
     const frames = [];
     for (let i = 0; i < settings.shots; i++) {
-      if (settings.timer > 0) await runCountdown(settings.timer);
+      if (settings.timer > 0) {
+        await runCountdown(settings.timer);
+      }
       triggerFlash();
-      frames.push(captureFrame(videoRef, {
-        filter: settings.filter,
-        mirrorOn: settings.mirrorOn,
-        facing,
-      }));
+      frames.push(
+        captureFrame(videoRef, {
+          filter: settings.filter,
+          mirrorOn: settings.mirrorOn,
+          facing,
+        }),
+      );
       await sleep(250);
     }
 
     lastFrames = frames;
     isRunning = false;
-    status = 'Render…';
+    status = "Render…";
 
     try {
       lastOutput = await buildLayout(frames, settings);
-      status = 'Fertig.';
+      status = "Fertig.";
     } catch (error) {
       console.error(error);
-      status = 'Render fehlgeschlagen.';
+      status = "Render fehlgeschlagen.";
     }
   }
 
@@ -98,30 +107,37 @@
 
   function triggerFlash() {
     isFlashing = true;
-    setTimeout(() => { isFlashing = false; }, 120);
+    setTimeout(() => {
+      isFlashing = false;
+    }, 120);
   }
 
   // ─── Output actions ──────────────────────────────────────────────────────────
 
   function handleRedo() {
-    lastOutput = '';
+    lastOutput = "";
     lastFrames = [];
-    status = 'Bereit.';
+    status = "Bereit.";
   }
 
   function handleDownload() {
-    if (!lastOutput) { status = 'Kein Ergebnis.'; return; }
+    if (!lastOutput) {
+      status = "Kein Ergebnis.";
+      return;
+    }
 
-    const anchor = document.createElement('a');
+    const anchor = document.createElement("a");
     anchor.href = lastOutput;
     anchor.download = `fotokasten_${settings.layout}_${settings.theme}_${settings.shape}.jpg`;
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
-    status = 'Download gestartet.';
+    status = "Download gestartet.";
+    lastOutput = "";
+    lastFrames = [];
   }
 
-  const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 </script>
 
 <div class="app">
@@ -192,7 +208,6 @@
     letter-spacing: 0.2px;
   }
 
-
   /* ── Camera + sliding panel ── */
 
   .stage-container {
@@ -211,7 +226,7 @@
     position: absolute;
     inset: 0;
     transform: translateY(100%);
-    transition: transform 0.40s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     background: rgba(11, 12, 16, 0.96);
     backdrop-filter: blur(18px);
   }

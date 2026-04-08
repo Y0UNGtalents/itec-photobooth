@@ -40,7 +40,7 @@
 
   onMount(() => {
     if (buttonRef) {
-      dimensions = buttonRef.getBoundingClientRect();   
+      dimensions = buttonRef.getBoundingClientRect();
     }
   });
 </script>
@@ -61,10 +61,11 @@
   </div>
 
   <div class="actions">
-
     {#if panelOpen}
-      <button class="action-btn settings" style="width: {dimensions.width}px; margin-left: auto;" onclick={onTogglePanel}
-        >Schließen</button
+      <button
+        class="action-btn settings"
+        style="width: {dimensions.width}px; margin-left: auto;"
+        onclick={onTogglePanel}>Schließen</button
       >
     {:else}
       <button class="action-btn" onclick={onDownload} disabled={!hasOutput}>
@@ -80,7 +81,9 @@
       >
         Neu
       </button>
-      <button class="action-btn" bind:this={buttonRef} onclick={onTogglePanel}>Einstellungen</button>
+      <button class="action-btn" bind:this={buttonRef} onclick={onTogglePanel}
+        >Einstellungen</button
+      >
     {/if}
   </div>
 
