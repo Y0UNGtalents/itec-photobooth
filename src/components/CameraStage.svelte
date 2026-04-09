@@ -20,7 +20,6 @@
    */
   let {
     videoRef = $bindable(null),
-    facing,
     mirrorOn,
     countdown,
     isFlashing,
@@ -33,7 +32,7 @@
     onTogglePanel,
   } = $props();
 
-  let shouldMirror = $derived(mirrorOn && facing === "user");
+  let shouldMirror = $derived(mirrorOn);
 
   let buttonRef = $state(null);
   let dimensions = $state({ width: 0, height: 0 });
@@ -51,6 +50,7 @@
     playsinline
     autoplay
     muted
+    disablePictureInPicture
     style:transform={shouldMirror ? "scaleX(-1)" : "none"}
   ></video>
 
@@ -68,12 +68,12 @@
         onclick={onTogglePanel}>Schließen</button
       >
     {:else}
-      <button class="action-btn" onclick={onDownload} disabled={!hasOutput}>
-        Download
-      </button>
-      <button class="action-btn primary" onclick={onStart} disabled={isRunning}>
-        Start
-      </button>
+    <button class="action-btn primary" onclick={onStart} disabled={isRunning}>
+      Start
+    </button>
+    <button class="action-btn" onclick={onDownload} disabled={!hasOutput}>
+      Download
+    </button>
       <button
         class="action-btn"
         onclick={onRedo}
@@ -175,7 +175,7 @@
     inset: 0;
     background: #fff;
     opacity: 0;
-    transition: opacity 0.12s ease;
+    transition: opacity 0.18s ease;
     pointer-events: none;
   }
 

@@ -1,11 +1,7 @@
 <script>
   import { onMount } from "svelte";
   import { settings } from "./lib/photoSettings.svelte.js";
-  import {
-    listCameras,
-    startCameraById,
-    stopCamera,
-  } from "./lib/cameraService.js";
+  import { listCameras, startCameraById, stopCamera} from "./lib/cameraService.js";
   import { captureFrame } from "./lib/photoCapture.js";
   import { buildLayout } from "./lib/layoutBuilder.js";
   import CameraStage from "./components/CameraStage.svelte";
@@ -13,7 +9,6 @@
 
   let videoRef = $state(null);
   let stream = $state(null);
-  let facing = $state("user");
   let cameras = $state([]);
   let selectedCameraId = $state("");
   let status = $state("Bereit.");
@@ -21,7 +16,6 @@
   let isRunning = $state(false);
   let countdown = $state(0);
   let isFlashing = $state(false);
-  let lastFrames = $state([]);
 
   let hasOutput = $derived(lastOutput !== "");
   let panelOpen = $state(false);
@@ -46,7 +40,6 @@
       stream = await startCameraById(deviceId || undefined);
 
       const track = stream.getVideoTracks()[0];
-      facing = track?.getSettings().facingMode ?? "user";
       selectedCameraId = track?.getSettings().deviceId ?? "";
 
       cameras = await listCameras();
@@ -78,13 +71,11 @@
         captureFrame(videoRef, {
           filter: settings.filter,
           mirrorOn: settings.mirrorOn,
-          facing,
         }),
       );
       await sleep(250);
     }
 
-    lastFrames = frames;
     isRunning = false;
     status = "Render…";
 
@@ -116,7 +107,6 @@
 
   function handleRedo() {
     lastOutput = "";
-    lastFrames = [];
     status = "Bereit.";
   }
 
@@ -128,13 +118,13 @@
 
     const anchor = document.createElement("a");
     anchor.href = lastOutput;
-    anchor.download = `fotokasten_${settings.layout}_${settings.theme}_${settings.shape}.jpg`;
+    anchor.download = `itec-photobooth_${settings.layout}_${settings.theme}_${settings.shape}.jpg`;
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
     status = "Download gestartet.";
     lastOutput = "";
-    lastFrames = [];
+    setTimeout(()=> status = "Bereit.", 1000 );
   }
 
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -153,7 +143,6 @@
     <div class="camera-clip">
       <CameraStage
         bind:videoRef
-        {facing}
         mirrorOn={settings.mirrorOn}
         {countdown}
         {isFlashing}

@@ -4,7 +4,7 @@ export const settings = $state({
   bg: 'paper',
   filter: 'none',
   shape: 'rounded',
-  shots: 4,
+  shots: 3,
   timer: 3,
   bgIntensity: 70,
   themeIntensity: 75,
