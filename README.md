@@ -18,7 +18,6 @@ Eine browserbasierte Fotobox-Anwendung für Veranstaltungen, gebaut mit **Svelte
 | **Mirror-Modus**     | Horizontale Spiegelung der Kameraansicht und des Outputs            |
 | **Beschriftung**     | Optionaler Freitext und automatisches Datum                         |
 | **Download**         | Exportiert das fertige Bild als JPEG                                |
-| **Flipbook**         | Exportiert die Aufnahmen als loopende WebM-Videodatei               |
 
 ---
 
@@ -26,11 +25,13 @@ Eine browserbasierte Fotobox-Anwendung für Veranstaltungen, gebaut mit **Svelte
 
 | Paket                                                                          | Version | Zweck                       |
 | ------------------------------------------------------------------------------ | ------- | --------------------------- |
-| [Svelte](https://svelte.dev)                                                   | ^5.28   | UI-Framework (Runes-Modus)  |
-| [Vite](https://vite.dev)                                                       | ^6.3    | Build-Tool & Dev-Server     |
-| [@sveltejs/vite-plugin-svelte](https://github.com/sveltejs/vite-plugin-svelte) | ^5.0    | Svelte-Integration für Vite |
+| [Svelte](https://svelte.dev)                                                   | ^5.28   | UI-Framework (Runes-Modus)        |
+| [Vite](https://vite.dev)                                                       | ^6.3    | Build-Tool & Dev-Server           |
+| [@sveltejs/vite-plugin-svelte](https://github.com/sveltejs/vite-plugin-svelte) | ^5.0    | Svelte-Integration für Vite       |
+| [@supabase/supabase-js](https://supabase.com/docs/reference/javascript)        | ^2.x    | Supabase Storage Client           |
+| [qrcode](https://github.com/soldair/node-qrcode)                               | ^1.x    | QR-Code-Generierung im Browser    |
 
-Keine weiteren Laufzeit-Abhängigkeiten. Canvas-API und MediaDevices-API sind native Browser-APIs.
+Canvas-API und MediaDevices-API sind native Browser-APIs.
 
 ---
 
@@ -42,6 +43,63 @@ npm run dev        # Dev-Server auf http://localhost:5173
 npm run build      # Produktions-Build nach dist/
 npm run preview    # Build lokal vorschauen
 ```
+
+---
+
+## Supabase Storage einrichten
+
+Nach einer Aufnahme wird das fertige Bild automatisch in Supabase Storage hochgeladen. Der Gast erhält anschließend einen QR-Code zum Herunterladen.
+
+### 1. Supabase-Projekt anlegen
+
+Unter [supabase.com](https://supabase.com) ein neues Projekt erstellen.
+
+### 2. Storage-Bucket erstellen
+
+Im linken Menü **Storage** öffnen → **New bucket** → Name `photos` eingeben → **Public bucket** aktivieren → speichern.
+
+### 3. Upload-Policy setzen
+
+Damit der anonyme Browser-Client Bilder hochladen darf, muss eine RLS-Policy gesetzt werden.
+
+Im linken Menü **SQL Editor** öffnen → **New query** → folgenden Code einfügen und ausführen:
+
+```sql
+CREATE POLICY "public upload"
+ON storage.objects
+FOR INSERT
+TO anon
+WITH CHECK (bucket_id = 'photos');
+```
+
+### 4. API-Zugangsdaten ermitteln
+
+Im linken Menü **Project Settings** (Zahnrad-Icon) → **API** öffnen.
+
+Folgende Werte werden benötigt:
+
+| Feld | Wo zu finden |
+| ---- | ------------ |
+| `VITE_SUPABASE_URL` | Abschnitt "Project URL" |
+| `VITE_SUPABASE_ANON_KEY` | Abschnitt "Project API keys" → Zeile `anon public` |
+
+> Der Anon Key wird von Supabase automatisch für jedes Projekt erstellt und muss nicht manuell angelegt werden.
+
+### 5. Umgebungsvariablen setzen
+
+Die Datei `.env.example` in `.env` kopieren und die Werte eintragen:
+
+```bash
+cp .env.example .env
+```
+
+```env
+VITE_SUPABASE_URL=https://xxxxxxxxxxxx.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJ...
+VITE_SUPABASE_BUCKET=photos
+```
+
+Die `.env`-Datei ist im `.gitignore` enthalten und wird nicht ins Repository übertragen.
 
 ---
 
@@ -70,8 +128,7 @@ itec-fotobooth/
         ├── cameraService.js          # startCamera / stopCamera
         ├── photoCapture.js           # captureFrame — Einzelbild vom Video auf Canvas
         ├── canvasRenderer.js         # Alle Canvas-Zeichenfunktionen
-        ├── layoutBuilder.js          # Strip / Grid / Polaroid Komposition
-        └── flipbookExporter.js       # WebM-Export via MediaRecorder API
+        └── layoutBuilder.js          # Strip / Grid / Polaroid Komposition
 ```
 
 ---
@@ -175,7 +232,6 @@ Jede Aufnahme durchläuft folgende Schritte:
 
 3. **Export**
    - `canvas.toDataURL('image/jpeg', 0.95)` — Download als JPEG
-   - `canvas.captureStream()` + `MediaRecorder` — Export als WebM-Flipbook
 
 ---
 
@@ -212,10 +268,9 @@ Alle visuellen Grundwerte sind als CSS Custom Properties definiert:
 | --------------------------- | ----------------------------- |
 | `MediaDevices.getUserMedia` | Kamerazugriff                 |
 | `Canvas 2D API`             | Bildkomposition und Rendering |
-| `MediaRecorder API`         | WebM-Flipbook-Export          |
 | `img.decode()`              | Asynchrones Laden der Frames  |
 
-Empfohlen: aktuelle Versionen von Chrome, Edge oder Firefox. Safari unterstützt den VP9-Codec für WebM eingeschränkt (Flipbook-Export fällt automatisch auf VP8 zurück).
+Empfohlen: aktuelle Versionen von Chrome, Edge oder Firefox.
 
 ---
 

@@ -4,8 +4,10 @@
   import { listCameras, startCameraById, stopCamera} from "./lib/cameraService.js";
   import { captureFrame } from "./lib/photoCapture.js";
   import { buildLayout } from "./lib/layoutBuilder.js";
+  import { uploadPhoto } from "./lib/supabaseService.js";
   import CameraStage from "./components/CameraStage.svelte";
   import ControlPanel from "./components/ControlPanel.svelte";
+  import QrCodeModal from "./components/QrCodeModal.svelte";
 
   let videoRef = $state(null);
   let stream = $state(null);
@@ -19,6 +21,7 @@
 
   let hasOutput = $derived(lastOutput !== "");
   let panelOpen = $state(false);
+  let qrUrl = $state("");
 
   // Sync stream to video element whenever either changes
   $effect(() => {
@@ -82,6 +85,7 @@
     try {
       lastOutput = await buildLayout(frames, settings);
       status = "Fertig.";
+      uploadAndShowQr(lastOutput);
     } catch (error) {
       console.error(error);
       status = "Render fehlgeschlagen.";
@@ -101,6 +105,21 @@
     setTimeout(() => {
       isFlashing = false;
     }, 120);
+  }
+
+  // ─── Supabase Upload ─────────────────────────────────────────────────────────
+
+  async function uploadAndShowQr(dataUrl) {
+    try {
+      status = "Hochladen…";
+      const filename = `photobooth_${settings.layout}_${Date.now()}.jpg`;
+      const publicUrl = await uploadPhoto(dataUrl, filename);
+      qrUrl = publicUrl;
+      status = "Fertig.";
+    } catch (error) {
+      console.error(error);
+      status = "Upload fehlgeschlagen.";
+    }
   }
 
   // ─── Output actions ──────────────────────────────────────────────────────────
@@ -129,6 +148,10 @@
 
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 </script>
+
+{#if qrUrl}
+  <QrCodeModal url={qrUrl} onClose={() => (qrUrl = "")} />
+{/if}
 
 <div class="app">
   <header class="top">

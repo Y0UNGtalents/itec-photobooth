@@ -237,9 +237,14 @@ function clipToShape(ctx, x, y, w, h, shape, r) {
       ctx.closePath();
       return;
     }
-    case 'heart':
-      drawHeartPath(ctx, cx, cy - (m / 2) * 1.05 * 0.08, (m / 2) * 1.05);
+    case 'heart': {
+      // Heart bounding box: 1.05 × size (height), 1.10 × size (width)
+      // Size so the heart fills the slot height with a small margin
+      const heartSize = (h / 1.05) * 0.96;
+      // Visual center of heart is at cy_heart + 0.425 × size — align with slot center
+      drawHeartPath(ctx, cx, cy - 0.425 * heartSize, heartSize);
       return;
+    }
     default:
       drawRoundedRect(ctx, x, y, w, h, r);
   }
