@@ -26,6 +26,7 @@ export async function buildLayout(frames, settings) {
   switch (settings.layout) {
     case 'strip':   return buildStrip(images, settings);
     case 'polaroid': return buildPolaroid(images, settings);
+    case 'collage': return buildCollage(images, settings);
     default:        return buildGrid(images, settings);
   }
 }
@@ -132,6 +133,87 @@ function drawPolaroidFrame(ctx, x, y, w, h) {
   drawRoundedRect(ctx, x, y, w, h, 18);
   ctx.fill();
   ctx.restore();
+}
+
+// ─── Collage layout ───────────────────────────────────────────────────────────
+
+function buildCollage(images, settings) {
+  const count = images.length;
+
+  // Grid columns based on photo count
+  const cols = count <= 3 ? 3 : count <= 6 ? 3 : 4;
+  const rows = Math.ceil(count / cols);
+
+  const margin    = 52;
+  const gapX      = 28;
+  const gapY      = 28;
+  const framePad  = 13;  // white border thickness
+  const polaroidBt = 52; // white space below photo (polaroid look)
+
+  const canvasW = 1200;
+  const availW  = canvasW - 2 * margin - (cols - 1) * gapX;
+  const frameW  = Math.floor(availW / cols);
+  const photoW  = frameW - 2 * framePad;
+  const photoH  = Math.round(photoW / ASPECT_RATIO);
+  const frameH  = photoH + 2 * framePad + polaroidBt;
+
+  const contentH = rows * frameH + (rows - 1) * gapY;
+  const canvasH  = contentH + 2 * margin + (hasCaption(settings) ? 80 : 30);
+
+  const { canvas, ctx } = createCanvas(canvasW, canvasH);
+  drawBackground(ctx, canvasW, canvasH, settings);
+
+  // Deterministic rotation and jitter per slot
+  const ROTS   = [-8, 6, -5, 9, -3, 7, -6, 4, -7, 5, -4, 8];
+  const JITTER = [
+    { x: -12, y:  8 }, { x: 16, y: -10 }, { x:  -7, y: -12 },
+    { x:  11, y: 13 }, { x: -14, y:   5 }, { x:   8, y:  -9 },
+    { x:  -9, y: 11 }, { x: 13, y:  -7 },
+  ];
+
+  const slots = [];
+  for (let i = 0; i < count; i++) {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const rowCount = row === rows - 1 ? count - row * cols : cols;
+    const rowShift = (cols - rowCount) * (frameW + gapX) / 2;
+
+    const baseX = margin + rowShift + col * (frameW + gapX) + frameW / 2;
+    const baseY = margin + row * (frameH + gapY) + frameH / 2;
+    const j = JITTER[i % JITTER.length];
+    slots.push({ cx: baseX + j.x, cy: baseY + j.y, rot: ROTS[i % ROTS.length] });
+  }
+
+  // Draw from back (last) to front (first) so first photo appears on top
+  for (let i = count - 1; i >= 0; i--) {
+    const { cx, cy, rot } = slots[i];
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate((rot * Math.PI) / 180);
+
+    // White polaroid frame with shadow
+    ctx.shadowColor   = 'rgba(0,0,0,.28)';
+    ctx.shadowBlur    = 20;
+    ctx.shadowOffsetY = 10;
+    ctx.fillStyle     = '#ffffff';
+    drawRoundedRect(ctx, -frameW / 2, -frameH / 2, frameW, frameH, 6);
+    ctx.fill();
+    ctx.shadowColor   = 'transparent';
+    ctx.shadowBlur    = 0;
+    ctx.shadowOffsetY = 0;
+
+    // Photo inside frame
+    drawShot(ctx, images[i], -photoW / 2, -frameH / 2 + framePad, photoW, photoH, 4, i, settings.shape);
+
+    ctx.restore();
+  }
+
+  drawThemeOverlay(ctx, canvasW, canvasH, settings);
+  drawOuterBorder(ctx, canvasW, canvasH, settings);
+  drawCaption(ctx, canvasW, canvasH, settings);
+
+  return canvas.toDataURL('image/jpeg', 0.95);
 }
 
 // ─── Utilities ────────────────────────────────────────────────────────────────

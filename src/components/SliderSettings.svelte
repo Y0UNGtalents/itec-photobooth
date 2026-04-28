@@ -5,6 +5,14 @@
    * All range sliders: shots, countdown, bg intensity, gap.
    * Reads and writes directly from/to the shared settings store.
    */
+
+  $effect(() => {
+    if (settings.layout === 'collage' && settings.shots < 3) {
+      settings.shots = 3;
+    }
+  });
+
+  let minShots = $derived(settings.layout === 'collage' ? 3 : 2);
 </script>
 
 <div class="row">
@@ -13,7 +21,7 @@
     <input
       id="shots"
       type="range"
-      min="2"
+      min={minShots}
       max="12"
       bind:value={settings.shots}
     />

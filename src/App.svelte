@@ -64,10 +64,11 @@
     isRunning = true;
     status = "Serie läuft…";
 
+    const timerMultiplier = settings.layout === 'collage' ? 2 : 1;
     const frames = [];
     for (let i = 0; i < settings.shots; i++) {
       if (settings.timer > 0) {
-        await runCountdown(settings.timer);
+        await runCountdown(settings.timer * timerMultiplier);
       }
       triggerFlash();
       frames.push(

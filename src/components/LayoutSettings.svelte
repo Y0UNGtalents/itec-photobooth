@@ -17,6 +17,7 @@
     <option value="strip">Layout: Strip</option>
     <option value="grid">Layout: Grid</option>
     <option value="polaroid">Layout: Polaroid</option>
+    <option value="collage" disabled={settings.shots < 3}>Layout: Collage{settings.shots < 3 ? ' (min. 3)' : ''}</option>
   </select>
 
   <select class="select" bind:value={settings.bg}>
@@ -69,9 +70,5 @@
 
   .select {
     padding: 24px 12px;
-  }
-
-  .option {
-    color: red;
   }
 </style>
